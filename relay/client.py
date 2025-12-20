@@ -335,13 +335,15 @@ class RelayClient:
         job_file = self._get_job_file(job_id)
         with open(job_file, "w") as f:
             json.dump(job_metadata, f, indent=2)
-        
+
         # Return BatchJob with user-provided job_id
         return BatchJob(
             job_id=job_id,
             submitted_at=provider_job.submitted_at,
             status=provider_job.status,
             n_requests=provider_job.n_requests,
+            completed_requests=provider_job.completed_requests,
+            failed_requests=provider_job.failed_requests,
         )
     
     def retrieve_batch_results(

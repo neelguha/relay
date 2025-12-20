@@ -2,10 +2,29 @@
 
 Relay is a Python package for batch API calls to commercial LLM APIs. It wraps different commercial LLM batch APIs into a single interface.
 
+
+**Note:** This is a work in progress. The API is subject to change. Right now, it only supports OpenAI.
+
 ## Installation
 
+### From PyPI (when published)
+
 ```bash
-pip install relay
+pip install relay-llm
+```
+
+### From Source
+
+```bash
+git clone https://github.com/neelguha/relay.git
+cd relay
+pip install -e .
+```
+
+### Development Installation
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ## Quick Start

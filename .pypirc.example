@@ -1,0 +1,17 @@
+# Example .pypirc file for publishing to PyPI
+# Copy this to ~/.pypirc and fill in your credentials
+# Or use environment variables: TWINE_USERNAME and TWINE_PASSWORD
+
+[distutils]
+index-servers =
+    pypi
+    testpypi
+
+[pypi]
+username = __token__
+password = pypi-your-token-here
+
+[testpypi]
+repository = https://test.pypi.org/legacy/
+username = __token__
+password = pypi-your-test-token-here
