@@ -1,6 +1,6 @@
 # Publishing Relay to PyPI
 
-This guide explains how to publish the Relay package to PyPI, both manually and automatically via GitHub Actions.
+This guide explains how to manually publish the Relay package to PyPI.
 
 ## Prerequisites
 
@@ -84,61 +84,6 @@ Instead of username/password, you can use API tokens. Twine will automatically r
    make publish
    ```
 
-## Automatic Publishing with GitHub Actions
-
-You can set up automatic publishing to PyPI using GitHub Actions. Two workflows are included:
-
-### Option 1: Publish on Git Tags (Recommended)
-
-The workflow `.github/workflows/publish-on-tag.yml` automatically publishes when you push a version tag:
-
-1. **Set up PyPI Trusted Publishing** (one-time setup):
-   - Go to your PyPI project settings: https://pypi.org/manage/project/relay-llm/settings/
-   - Scroll to "Publishing" → "Add a new pending publisher"
-   - Select "GitHub Actions"
-   - Enter your GitHub username and repository name (`neelguha/relay`)
-   - Enter the workflow filename: `.github/workflows/publish-on-tag.yml`
-   - Enter the environment name: `__pypi__` (or leave blank)
-   - Click "Add"
-
-2. **Update version and create a tag**:
-   ```bash
-   # Update version in relay/__init__.py and pyproject.toml
-   git add relay/__init__.py pyproject.toml
-   git commit -m "Bump version to 0.1.1"
-   git tag v0.1.1
-   git push origin main --tags
-   ```
-
-3. The workflow will automatically:
-   - Extract the version from the tag
-   - Update version files
-   - Build the package
-   - Publish to PyPI
-
-### Option 2: Publish on GitHub Releases
-
-The workflow `.github/workflows/publish.yml` publishes when you create a GitHub release:
-
-1. Set up PyPI Trusted Publishing (same as above, but use workflow: `.github/workflows/publish.yml`)
-
-2. Create a GitHub release:
-   - Go to your repository → Releases → Create a new release
-   - Choose a tag (or create a new one)
-   - Fill in release notes
-   - Click "Publish release"
-
-3. The workflow will automatically build and publish to PyPI
-
-### Option 3: Manual Trigger
-
-You can also manually trigger the workflow:
-- Go to Actions → "Publish to PyPI" → "Run workflow"
-- Enter the version number
-- Click "Run workflow"
-
-**Note:** The workflows use PyPI's Trusted Publishing feature, which is more secure than storing API tokens as secrets. No secrets need to be configured in GitHub.
-
 ## Version Management
 
 - Follow [Semantic Versioning](https://semver.org/):
@@ -154,15 +99,15 @@ You can also manually trigger the workflow:
 
 ## Post-Publication
 
-After publishing (manually or automatically):
+After publishing:
 
-1. Create a git tag (if not already created):
+1. Create a git tag:
    ```bash
    git tag v0.1.0
    git push origin v0.1.0
    ```
 
-2. Create a GitHub release with release notes (if using manual publishing)
+2. Create a GitHub release with release notes
 
 3. Update CHANGELOG.md (if you maintain one)
 
