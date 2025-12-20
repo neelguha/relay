@@ -209,7 +209,7 @@ class RelayClient:
         """Submit a batch of requests to the LLM API.
         
         Submits a list of BatchRequest objects as a single batch job.
-        The job is automatically saved to ~/.relay/ as a JSON file.
+        The job is automatically saved to the workspace directory as a JSON file.
         
         Args:
             requests: A list of BatchRequest objects to process in the batch
