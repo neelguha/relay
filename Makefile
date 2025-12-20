@@ -1,4 +1,4 @@
-.PHONY: install install-dev build-deps build clean test publish publish-test help
+.PHONY: install install-dev build-deps build clean test publish help
 
 help:
 	@echo "Available commands:"
@@ -9,7 +9,6 @@ help:
 	@echo "  make clean        - Clean build artifacts"
 	@echo "  make test         - Run tests"
 	@echo "  make publish      - Publish to PyPI (requires credentials)"
-	@echo "  make publish-test - Publish to TestPyPI (requires credentials)"
 
 install:
 	pip install -e .
@@ -55,18 +54,3 @@ publish: build
 		twine upload dist/*; \
 	fi
 
-publish-test: build
-	@echo "Publishing to TestPyPI..."
-	@python -c "import twine" 2>/dev/null || (echo "Error: 'twine' package not found. Run 'make build-deps' or 'pip install twine' first." && exit 1)
-	@if [ -f ~/.pypirc ]; then \
-		echo "✓ Using credentials from ~/.pypirc"; \
-		twine upload --repository testpypi dist/*; \
-	elif [ -f .pypirc ]; then \
-		echo "⚠ Found .pypirc in project directory. Twine reads from ~/.pypirc by default."; \
-		echo "  Copy it to ~/.pypirc or use: TWINE_USERNAME and TWINE_PASSWORD environment variables"; \
-		twine upload --repository testpypi dist/*; \
-	else \
-		echo "⚠ No ~/.pypirc file found. Twine will prompt for credentials."; \
-		echo "  Create ~/.pypirc with your PyPI token, or use TWINE_USERNAME/TWINE_PASSWORD env vars."; \
-		twine upload --repository testpypi dist/*; \
-	fi

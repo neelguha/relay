@@ -1,5 +1,8 @@
 example_workspace/
 
+# GitHub Actions
+.github/workflows/*.yml.bak
+
 # Distribution / packaging
 dist/
 build/
