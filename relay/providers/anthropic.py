@@ -5,6 +5,12 @@ from pathlib import Path
 from relay.providers.base import BaseProvider
 from relay.models import BatchRequest, BatchJob
 
+import anthropic
+from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
+from anthropic.types.messages.batch_create_params import Request
+from datetime import datetime
+
+
 
 class AnthropicProvider(BaseProvider):
     """Provider implementation for Anthropic's batch API.
@@ -15,16 +21,14 @@ class AnthropicProvider(BaseProvider):
     
     def __init__(
         self,
-        api_key: str,
         **kwargs: Any,
     ) -> None:
         """Initialize the Anthropic provider.
         
         Args:
-            api_key: Anthropic API key for authentication
             **kwargs: Additional Anthropic-specific configuration options
         """
-        pass
+        self.client = anthropic.Anthropic()
     
     def submit_batch(
         self,
@@ -47,7 +51,46 @@ class AnthropicProvider(BaseProvider):
             APIError: If the batch submission fails (e.g., authentication error,
                      rate limit exceeded, invalid API key)
         """
-        pass
+        # Convert the requests to the Anthropic format
+        requests_anthropic = []
+        for request in requests:
+            messages = []
+            messages.append({
+                "role": "user",
+                "content": request.prompt,
+            })
+            formatted_args = {}
+            for key, value in request.provider_args.items():
+                if key == "thinking_budget_tokens":
+                    formatted_args["thinking"] = {
+                        "type": "enabled",
+                        "budget_tokens": value,
+                    }
+                    assert value >= 1024, "Thinking budget tokens must be at least 1024"
+                else:
+                    formatted_args[key] = value
+
+
+            requests_anthropic.append(Request(
+                custom_id=request.id,
+                params=MessageCreateParamsNonStreaming(
+                    model=request.model,
+                    system=request.system_prompt if request.system_prompt else None,
+                    max_tokens=request.max_tokens,
+                    messages=messages,
+                    **formatted_args
+                ),
+            ))
+        batch_object = self.client.messages.batches.create(
+            requests=requests_anthropic,
+        )
+        return BatchJob(
+            job_id=batch_object.id,
+            submitted_at=datetime.now(),
+            status=batch_object.processing_status,
+            n_requests=len(requests),
+        )
+        
     
     def monitor_batch(
         self,
@@ -67,7 +110,16 @@ class AnthropicProvider(BaseProvider):
             ValueError: If job_id is invalid or not found
             APIError: If the status check fails
         """
-        pass
+        batch_object = self.client.messages.batches.retrieve(job_id)
+
+        return BatchJob(
+            job_id=batch_object.id,
+            submitted_at=batch_object.created_at,
+            status=batch_object.processing_status,
+            n_requests=batch_object.request_counts.processing,
+            completed_requests=batch_object.request_counts.succeeded,
+            failed_requests=batch_object.request_counts.errored,
+        )
     
     def retrieve_batch_results(
         self,
@@ -87,7 +139,14 @@ class AnthropicProvider(BaseProvider):
             ValueError: If job_id is invalid or not found
             APIError: If the results retrieval fails (e.g., batch not completed)
         """
-        pass
+        batch_object = self.client.messages.batches.retrieve(job_id)
+        if batch_object.processing_status != "ended":
+            raise ValueError(f"Batch job {job_id} is not completed (status: {batch_object['processing_status']})")
+        
+        results = []
+        for result in self.client.messages.batches.results(job_id):
+            results.append(result.to_dict())
+        return results
     
     def cancel_batch(
         self,
@@ -107,7 +166,8 @@ class AnthropicProvider(BaseProvider):
             ValueError: If job_id is invalid or not found
             APIError: If the cancellation request fails
         """
-        pass
+        self.client.messages.batches.cancel(job_id)
+        return True
     
     def format_request(
         self,

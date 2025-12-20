@@ -20,6 +20,7 @@ class BatchRequest:
     model: str
     system_prompt: str
     prompt: str
+    max_tokens: int
     provider_args: Dict[str, Any] = field(default_factory=dict)
 
 

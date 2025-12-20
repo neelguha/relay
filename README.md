@@ -3,7 +3,7 @@
 Relay is a Python package for batch API calls to commercial LLM APIs. It wraps different commercial LLM batch APIs into a single interface.
 
 
-**Note:** This is a work in progress. The API is subject to change. Right now, it only supports OpenAI.
+**Note:** This is a work in progress. The API is subject to change.
 
 ## Installation
 
@@ -213,3 +213,8 @@ export OPENAI_API_KEY='your-api-key'
 export TOGETHER_API_KEY='your-api-key'  # For Together AI
 export ANTHROPIC_API_KEY='your-api-key'  # For Anthropic
 ```
+
+### Todo
+
+- [ ] Add support for XAI batch API
+- [ ] Add support for Google batch API
