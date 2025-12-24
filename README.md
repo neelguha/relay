@@ -2,7 +2,6 @@
 
 Relay is a Python package for batch API calls to commercial LLM APIs. It wraps different commercial LLM batch APIs into a single interface.
 
-
 **Note:** This is a work in progress. The API is subject to change.
 
 ## Installation
@@ -129,6 +128,7 @@ for result in results:
 ```
 
 The `retrieve_batch_results` method:
+
 - Fetches results from the provider API
 - Saves them to `{job_id}_results.json` in the workspace
 - Returns a list of dictionaries, one per request in the batch
@@ -188,13 +188,188 @@ client = RelayClient(directory="my_workspace")
 
 The workspace directory structure:
 
-```
+```text
 my_workspace/
   job-001.json              # Job metadata
   job-001_results.json      # Results (when retrieved)
   job-002.json
   job-002_results.json
   ...
+```
+
+### File Formats
+
+#### Job Metadata Files (`{job_id}.json`)
+
+Each job is saved as a JSON file containing metadata about the batch job:
+
+```json
+{
+  "job_id": "my-batch-001",
+  "provider_job_id": "batch_abc123...",
+  "provider": "openai",
+  "submitted_at": "2025-12-23T16:27:47.743798",
+  "status": "completed",
+  "n_requests": 3,
+  "completed_requests": 3,
+  "failed_requests": 0,
+  "description": "Example batch job"
+}
+```
+
+**Fields:**
+
+- `job_id`: Your custom job identifier
+- `provider_job_id`: The provider's internal batch ID (used for API calls)
+- `provider`: Provider name (`"openai"`, `"together"`, or `"anthropic"`)
+- `submitted_at`: ISO format timestamp when the job was submitted
+- `status`: Current job status (varies by provider)
+- `n_requests`: Total number of requests in the batch
+- `completed_requests`: Number of successfully completed requests
+- `failed_requests`: Number of failed requests
+- `description`: Optional description you provided
+
+#### Results Files (`{job_id}_results.json`)
+
+Results are saved as a JSON array, with one object per request. The structure varies by provider:
+
+**OpenAI Format:**
+
+OpenAI uses the Responses API format for batch jobs:
+
+```json
+[
+  {
+    "id": "batch_req_abc123...",
+    "custom_id": "req-1",
+    "response": {
+      "status_code": 200,
+      "request_id": "ce77c014cbadfa50999e860db14eff2c",
+      "body": {
+        "id": "resp_0999820f510428c300694b33df8664819ca6bf8e5256a18e07",
+        "object": "response",
+        "status": "completed",
+        "model": "gpt-4o-mini-2024-07-18",
+        "output": [
+          {
+            "id": "msg_0999820f510428c300694b33dfddac819caca8d39f030395e8",
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "text": "2 + 2 equals 4."
+              }
+            ],
+            "role": "assistant"
+          }
+        ],
+        "usage": {
+          "input_tokens": 24,
+          "output_tokens": 9,
+          "total_tokens": 33
+        }
+      }
+    },
+    "error": null
+  },
+  ...
+]
+```
+
+**Together AI Format:**
+
+Together AI uses a similar format to OpenAI's Responses API:
+
+```json
+[
+  {
+    "id": "br_abc123...",
+    "custom_id": "req-1",
+    "response": {
+      "status_code": 200,
+      "body": {
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "message": {
+              "content": "The answer is 4.",
+              "role": "assistant"
+            }
+          }
+        ],
+        "model": "openai/gpt-oss-20b",
+        "usage": {
+          "prompt_tokens": 20,
+          "completion_tokens": 10,
+          "total_tokens": 30
+        }
+      }
+    }
+  },
+  ...
+]
+```
+
+**Anthropic Format:**
+
+```json
+[
+  {
+    "custom_id": "req-1",
+    "result": {
+      "type": "succeeded",
+      "message": {
+        "id": "msg_abc123...",
+        "content": [
+          {
+            "text": "The answer is 4.",
+            "type": "text"
+          }
+        ],
+        "model": "claude-sonnet-4-5-20250929",
+        "role": "assistant",
+        "stop_reason": "end_turn",
+        "usage": {
+          "input_tokens": 20,
+          "output_tokens": 10
+        }
+      }
+    }
+  },
+  ...
+]
+```
+
+**Key differences:**
+
+- **OpenAI**: Uses Responses API format with `output` array containing message objects. Access text via `response.body.output[0].content[0].text`
+- **Together AI**: Uses chat completions format with `choices` array. Access text via `response.body.choices[0].message.content`
+- **Anthropic**: Uses `result` object with `message.content` array. Access text via `result.message.content[0].text`
+- All formats include the `custom_id` field, which matches the `id` you provided in your `BatchRequest`
+
+**Accessing Results:**
+
+```python
+results = client.retrieve_batch_results("my-batch-001")
+
+for result in results:
+    custom_id = result.get('custom_id')
+    
+    # OpenAI format (Responses API)
+    if 'response' in result and 'output' in result['response'].get('body', {}):
+        content = result['response']['body']['output'][0]['content'][0]['text']
+    
+    # Together AI format (chat completions)
+    elif 'response' in result and 'choices' in result['response'].get('body', {}):
+        content = result['response']['body']['choices'][0]['message']['content']
+    
+    # Anthropic format
+    elif 'result' in result:
+        content = result['result']['message']['content'][0]['text']
+    
+    print(f"{custom_id}: {content}")
 ```
 
 **Key benefits:**
