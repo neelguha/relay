@@ -137,6 +137,40 @@ class RelayClient:
         """
         return self.directory / f"{job_id}_results.json"
     
+    def _normalize_status(self, status: str) -> str:
+        """Normalize status values across different providers.
+        
+        Args:
+            status: Raw status string from provider
+            
+        Returns:
+            Normalized status string
+        """
+        status_lower = status.lower()
+        
+        # Completed statuses
+        if status_lower in {"completed", "ended", "finalizing"}:
+            return "completed"
+        
+        # In progress statuses
+        if status_lower in {"in_progress", "processing", "validating"}:
+            return "in_progress"
+        
+        # Failed statuses
+        if status_lower in {"failed", "expired"}:
+            return "failed"
+        
+        # Cancelled statuses
+        if status_lower == "cancelled":
+            return "cancelled"
+        
+        # Pending statuses
+        if status_lower == "pending":
+            return "pending"
+        
+        # Return original if not recognized
+        return status_lower
+    
     def _is_job_in_progress(self, status: str) -> bool:
         """Check if a job status indicates it's still in progress.
         
@@ -146,8 +180,9 @@ class RelayClient:
         Returns:
             True if job is in progress, False if completed/failed/cancelled
         """
+        normalized = self._normalize_status(status)
         completed_statuses = {"completed", "failed", "cancelled"}
-        return status not in completed_statuses
+        return normalized not in completed_statuses
     
     def _load_job_metadata(self, job_id: str) -> Dict[str, Any]:
         """Load job metadata from disk.
@@ -287,6 +322,92 @@ class RelayClient:
             Dictionary containing job metadata, or None if not found
         """
         return self._check_job_exists(job_id)
+    
+    def get_all_jobs(
+        self,
+        status: Optional[str] = None,
+        provider: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        description_search: Optional[str] = None,
+        job_id_search: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get all jobs with optional filtering.
+        
+        Args:
+            status: Filter by normalized status (e.g., "completed", "in_progress", "failed")
+            provider: Filter by provider name ("openai", "anthropic", "together")
+            date_from: Filter jobs submitted after this date (ISO format string)
+            date_to: Filter jobs submitted before this date (ISO format string)
+            description_search: Search description text (case-insensitive substring match)
+            job_id_search: Search job ID (case-insensitive substring match)
+            
+        Returns:
+            List of job dictionaries with all metadata including has_results field,
+            sorted by submitted_at (newest first)
+        """
+        jobs = []
+        
+        try:
+            # Get all job metadata files
+            job_files = [
+                f for f in self.directory.glob("*.json")
+                if f.is_file() and not f.name.endswith("_results.json")
+            ]
+            
+            for job_file in job_files:
+                try:
+                    with open(job_file, "r") as f:
+                        job_data = json.load(f)
+                    
+                    # Add has_results field
+                    job_data["has_results"] = self.has_results(job_data["job_id"])
+                    
+                    # Apply filters
+                    if status:
+                        normalized_status = self._normalize_status(job_data.get("status", ""))
+                        if normalized_status != status.lower():
+                            continue
+                    
+                    if provider:
+                        if job_data.get("provider", "").lower() != provider.lower():
+                            continue
+                    
+                    if date_from:
+                        submitted_at = job_data.get("submitted_at", "")
+                        if submitted_at and submitted_at < date_from:
+                            continue
+                    
+                    if date_to:
+                        submitted_at = job_data.get("submitted_at", "")
+                        if submitted_at and submitted_at > date_to:
+                            continue
+                    
+                    if description_search:
+                        description = job_data.get("description", "")
+                        if description_search.lower() not in description.lower():
+                            continue
+                    
+                    if job_id_search:
+                        job_id = job_data.get("job_id", "")
+                        if job_id_search.lower() not in job_id.lower():
+                            continue
+                    
+                    jobs.append(job_data)
+                except (json.JSONDecodeError, IOError, KeyError):
+                    # Skip corrupted or invalid files
+                    continue
+            
+            # Sort by submitted_at (newest first)
+            jobs.sort(
+                key=lambda x: x.get("submitted_at", ""),
+                reverse=True
+            )
+            
+        except Exception as e:
+            raise IOError(f"Failed to access workspace directory: {str(e)}")
+        
+        return jobs
     
     def has_results(self, job_id: str) -> bool:
         """Check if results exist for a job.

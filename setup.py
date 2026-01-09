@@ -37,6 +37,14 @@ setup(
             "flake8>=6.0.0",
             "mypy>=1.0.0",
         ],
+        "dashboard": [
+            "flask>=3.0.0",
+        ],
+    },
+    entry_points={
+        "console_scripts": [
+            "relay-dashboard=relay.dashboard:main",
+        ],
     },
     classifiers=[
         "Development Status :: 3 - Alpha",

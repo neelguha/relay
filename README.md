@@ -170,6 +170,78 @@ if cancelled:
     print("Job successfully cancelled")
 ```
 
+## Web Dashboard
+
+Relay includes a web-based dashboard for monitoring and managing batch jobs. The dashboard provides:
+
+- **Job Overview**: View all jobs with status, provider, and progress information
+- **Filtering & Search**: Filter by status, provider, date range, description, or job ID
+- **Statistics**: See summary statistics (total jobs, completed, in-progress, failed)
+- **Job Details**: Click on any job to view detailed information
+- **Auto-refresh**: Automatically refresh job status every 30 seconds
+
+### Dashboard Installation
+
+Install the dashboard dependencies:
+
+```bash
+pip install relay-llm[dashboard]
+```
+
+### Launching the Dashboard
+
+Launch the dashboard from the command line:
+
+```bash
+relay-dashboard my_workspace
+```
+
+Or using Python:
+
+```python
+from relay.dashboard import run_dashboard
+
+run_dashboard(workspace_dir="my_workspace", host="127.0.0.1", port=5000)
+```
+
+The dashboard will be available at `http://127.0.0.1:5000` (or the specified host/port).
+
+### Command Line Options
+
+```bash
+relay-dashboard <workspace_dir> [--host HOST] [--port PORT] [--debug]
+```
+
+- `workspace_dir`: Path to your workspace directory (required)
+- `--host`: Host to bind to (default: 127.0.0.1)
+- `--port`: Port to bind to (default: 5000)
+- `--debug`: Enable debug mode
+
+### Dashboard Features
+
+**Filtering:**
+
+- Filter by status (completed, in-progress, failed, cancelled, pending)
+- Filter by provider (OpenAI, Anthropic, Together AI)
+- Filter by date range (submitted date)
+- Search by description text
+- Search by job ID
+
+**Job List:**
+
+- View all jobs in a sortable table
+- See job status with color-coded badges
+- View progress (completed/total requests)
+- See if results are available
+- Click on any job ID to view details
+
+**Statistics:**
+
+- Total number of jobs
+- Number of completed jobs
+- Number of in-progress jobs
+- Number of failed jobs
+
 ## Supported Providers
 
 Relay currently supports the following providers:

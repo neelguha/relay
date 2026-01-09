@@ -37,6 +37,12 @@ dev = [
     "flake8>=6.0.0",
     "mypy>=1.0.0",
 ]
+dashboard = [
+    "flask>=3.0.0",
+]
+
+[project.scripts]
+relay-dashboard = "relay.dashboard:main"
 
 [project.urls]
 Homepage = "https://github.com/neelguha/relay"
