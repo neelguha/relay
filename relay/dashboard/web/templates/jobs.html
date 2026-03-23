@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs — relay dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Jobs</h1>
+  <p class="page-subtitle">{{ total }} job{{ 's' if total != 1 else '' }} found</p>
+</div>
+
+<!-- Filter bar -->
+<form method="get" action="/jobs" class="filter-bar">
+  <input
+    type="text"
+    name="search"
+    value="{{ search }}"
+    placeholder="Search id, model, project, provider&hellip;"
+    style="min-width:260px;"
+  />
+  <select name="status">
+    <option value="">All statuses</option>
+    {% for s in all_statuses %}
+      <option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <select name="provider">
+    <option value="">All providers</option>
+    {% for p in all_providers %}
+      <option value="{{ p }}" {% if p == provider_filter %}selected{% endif %}>{{ p }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  {% if search or status_filter or provider_filter %}
+    <a href="/jobs" class="btn btn-secondary">Clear</a>
+  {% endif %}
+</form>
+
+<!-- Jobs table -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Provider</th>
+        <th>Model</th>
+        <th>Status</th>
+        <th>Progress</th>
+        <th>Cost (est.)</th>
+        <th>Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+      <tr>
+        <td>
+          <a href="/jobs/{{ job.id }}" style="display:inline-block;" title="{{ job.id }}">
+            {{ job.name or job.id[:8] + '…' }}
+          </a>
+          {% if job.project %}
+            <div class="text-muted" style="font-size:0.7rem;">{{ job.project }}</div>
+          {% endif %}
+        </td>
+        <td>{{ job.provider or '—' }}</td>
+        <td style="font-size:0.8rem;">{{ job.model or '—' }}</td>
+        <td>
+          <span class="badge badge-{{ job.status | lower | replace('_','-') }}">
+            {{ job.status }}
+          </span>
+        </td>
+        <td style="min-width:120px;">
+          {% set pct = ((job.completed_requests or 0) / (job.total_requests or 1) * 100) | round | int %}
+          <div style="font-size:0.75rem; color:#6e7681; margin-bottom:3px;">
+            {{ job.completed_requests or 0 }} / {{ job.total_requests or 0 }}
+          </div>
+          <div class="progress-outer" style="width:100px;">
+            <div class="progress-inner" style="width:{{ pct }}%;"></div>
+          </div>
+        </td>
+        <td>${{ "%.4f" | format(job.estimated_cost_usd or 0) }}</td>
+        <td style="font-size:0.78rem; color:#6e7681; white-space:nowrap;">
+          {{ job.created_at or '—' }}
+        </td>
+        <td>
+          <a href="/jobs/{{ job.id }}" class="btn btn-secondary" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+            View
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" class="text-muted" style="text-align:center; padding:2rem;">
+          No jobs found.
+          {% if search or status_filter or provider_filter %}
+            <a href="/jobs">Clear filters</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}
+    <a href="/jobs?page={{ page - 1 }}&search={{ search }}&status={{ status_filter }}&provider={{ provider_filter }}">
+      &larr; Prev
+    </a>
+  {% endif %}
+
+  {% for p in range(1, total_pages + 1) %}
+    {% if p == page %}
+      <span class="current">{{ p }}</span>
+    {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+      <a href="/jobs?page={{ p }}&search={{ search }}&status={{ status_filter }}&provider={{ provider_filter }}">
+        {{ p }}
+      </a>
+    {% elif p == page - 3 or p == page + 3 %}
+      <span class="text-muted">&hellip;</span>
+    {% endif %}
+  {% endfor %}
+
+  {% if page < total_pages %}
+    <a href="/jobs?page={{ page + 1 }}&search={{ search }}&status={{ status_filter }}&provider={{ provider_filter }}">
+      Next &rarr;
+    </a>
+  {% endif %}
+
+  <span style="margin-left:0.5rem;">
+    Page {{ page }} of {{ total_pages }} &middot; {{ total }} total
+  </span>
+</div>
+{% endif %}
+{% endblock %}

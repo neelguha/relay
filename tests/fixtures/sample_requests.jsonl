@@ -1,0 +1,5 @@
+{"id": "req-001", "messages": [{"role": "user", "content": "What is the capital of France?"}]}
+{"id": "req-002", "messages": [{"role": "user", "content": "Summarize the water cycle in one sentence."}]}
+{"id": "req-003", "messages": [{"role": "user", "content": "List three primary colors."}]}
+{"id": "req-004", "messages": [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "What is 12 multiplied by 8?"}]}
+{"id": "req-005", "messages": [{"role": "user", "content": "Translate 'hello world' into Spanish."}]}

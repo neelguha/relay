@@ -1,0 +1,39 @@
+<!-- Summary cards partial — rendered by /overview/cards for HTMX polling. -->
+<div class="card-grid" id="summary-cards"
+     hx-get="/overview/cards"
+     hx-trigger="every 5s"
+     hx-swap="outerHTML">
+
+  <!-- Active jobs -->
+  <div class="card">
+    <div class="card-label">Active Jobs</div>
+    <div class="card-value accent-blue">{{ active_jobs }}</div>
+    <div class="card-sub">{{ total_jobs }} total &middot; {{ completed_jobs }} complete</div>
+  </div>
+
+  <!-- Cost today -->
+  <div class="card">
+    <div class="card-label">Cost Today</div>
+    <div class="card-value accent-green">${{ "%.4f"|format(cost_today_usd) }}</div>
+    <div class="card-sub">UTC calendar day</div>
+  </div>
+
+  <!-- Cache hit rate -->
+  <div class="card">
+    <div class="card-label">Cache Hit Rate</div>
+    <div class="card-value {% if cache_hit_rate >= 0.5 %}accent-green{% elif cache_hit_rate > 0 %}accent-yellow{% else %}text-muted{% endif %}">
+      {{ "%.1f"|format(cache_hit_rate * 100) }}%
+    </div>
+    <div class="card-sub">across all requests</div>
+  </div>
+
+  <!-- Errors last hour -->
+  <div class="card">
+    <div class="card-label">Errors (1 h)</div>
+    <div class="card-value {% if errors_last_hour > 0 %}accent-red{% else %}accent-green{% endif %}">
+      {{ errors_last_hour }}
+    </div>
+    <div class="card-sub">failed jobs</div>
+  </div>
+
+</div>

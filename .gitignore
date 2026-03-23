@@ -1,117 +1,58 @@
-example_workspace/
-
-# GitHub Actions
-.github/workflows/*.yml.bak
-
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-.eggs/
-*.egg
-MANIFEST
-
-# PyPI
-.pypirc
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
+*.pyc
 
 # Distribution / packaging
-.Python
-build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
+build/
 *.egg-info/
-.installed.cfg
 *.egg
 MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
 # Virtual environments
+.venv/
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
-.venv
 
-# IDEs
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.coveragerc
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# relay runtime data
+*.db
+*.db-shm
+*.db-wal
+relay_results/
+~/.relay/
+
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-.project
-.pydevproject
-.settings/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# Project-specific
-# Storage directories (job metadata)
-relay_manager/
-*.json
-!example_openai.py
-!README.md
-
-# Results directories
-results/
-
-# Temporary files created during batch submission
-*.jsonl
-requests.jsonl
-
-# OS-specific
+# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Environment variables
+# Docs output
+docs/
+
+# Secrets / config overrides
 .env
-.env.local
+config.toml
+*.local.toml

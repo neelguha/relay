@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.name or job.id[:8] }} — relay dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1 class="page-title">
+      {% if job.name %}
+        {{ job.name }}
+        <span style="font-size:0.75rem; color:#6e7681; font-weight:400;">{{ job.id[:12] }}…</span>
+      {% else %}
+        Job
+        <span style="font-size:0.9rem; color:#6e7681; font-weight:400;">{{ job.id }}</span>
+      {% endif %}
+    </h1>
+    <p class="page-subtitle">
+      {{ job.provider }} &middot; {{ job.model }}
+      {% if job.project %} &middot; {{ job.project }}{% endif %}
+    </p>
+  </div>
+  <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
+    <span class="badge badge-{{ job.status | lower | replace('_','-') }}" style="font-size:0.8rem; padding:0.3rem 0.8rem;">
+      {{ job.status }}
+    </span>
+    {% if job.status not in ('COMPLETED', 'PARTIAL', 'FAILED', 'CANCELLED') %}
+    <button
+      class="btn btn-danger"
+      hx-post="/jobs/{{ job.id }}/cancel"
+      hx-confirm="Cancel this job?"
+      hx-target="#action-result"
+      hx-swap="innerHTML">
+      Cancel
+    </button>
+    {% endif %}
+    <button
+      class="btn btn-secondary"
+      hx-post="/jobs/{{ job.id }}/resubmit"
+      hx-target="#action-result"
+      hx-swap="innerHTML">
+      Resubmit
+    </button>
+    <a href="/jobs" class="btn btn-secondary">&larr; Back</a>
+  </div>
+</div>
+
+<!-- Inline action result -->
+<div id="action-result" class="mb-4" style="min-height:1.2rem; font-size:0.82rem;"></div>
+
+<!-- Progress bar (shown for non-terminal jobs) -->
+{% if job.status not in ('COMPLETED', 'PARTIAL', 'FAILED', 'CANCELLED') %}
+<div class="card mb-4" style="padding:1rem 1.4rem;">
+  <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#6e7681; margin-bottom:0.4rem;">
+    <span>Progress</span>
+    <span>{{ job.completed_requests or 0 }} / {{ job.total_requests or 0 }} requests &middot; {{ job.progress_pct }}%</span>
+  </div>
+  <div class="progress-outer" style="height:10px;">
+    <div class="progress-inner" style="width:{{ job.progress_pct }}%;"></div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Key metrics -->
+<div class="detail-grid">
+
+  <div class="detail-block">
+    <dl>
+      <dt>Total requests</dt>
+      <dd>{{ job.total_requests or 0 }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Completed</dt>
+      <dd class="text-green">{{ job.completed_requests or 0 }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Failed</dt>
+      <dd class="{% if job.failed_requests %}text-red{% endif %}">{{ job.failed_requests or 0 }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Cache hits</dt>
+      <dd class="text-blue">{{ job.cached_hits or 0 }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Input tokens</dt>
+      <dd>{{ "{:,}".format(job.input_tokens or 0) }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Output tokens</dt>
+      <dd>{{ "{:,}".format(job.output_tokens or 0) }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Estimated cost</dt>
+      <dd class="text-green">${{ "%.6f" | format(job.estimated_cost_usd or 0) }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Actual cost</dt>
+      <dd>
+        {% if job.actual_cost_usd is not none %}
+          ${{ "%.6f" | format(job.actual_cost_usd) }}
+        {% else %}
+          <span class="text-muted">—</span>
+        {% endif %}
+      </dd>
+    </dl>
+  </div>
+
+</div>
+
+<!-- Timing -->
+<div class="section-title">Timing</div>
+<div class="detail-grid" style="margin-bottom:1.5rem;">
+
+  <div class="detail-block">
+    <dl>
+      <dt>Created</dt>
+      <dd>{{ job.created_at or '—' }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Submitted</dt>
+      <dd>{{ job.submitted_at or '—' }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Completed</dt>
+      <dd>{{ job.completed_at or '—' }}</dd>
+    </dl>
+  </div>
+
+  <div class="detail-block">
+    <dl>
+      <dt>Elapsed</dt>
+      <dd>
+        {% if job.elapsed_seconds is not none %}
+          {% set h = (job.elapsed_seconds // 3600) | int %}
+          {% set m = ((job.elapsed_seconds % 3600) // 60) | int %}
+          {% set s = (job.elapsed_seconds % 60) | int %}
+          {% if h > 0 %}{{ h }}h {% endif %}{% if m > 0 or h > 0 %}{{ m }}m {% endif %}{{ s }}s
+        {% else %}
+          <span class="text-muted">—</span>
+        {% endif %}
+      </dd>
+    </dl>
+  </div>
+
+</div>
+
+<!-- Tags -->
+{% if job.tags %}
+<div class="section-title">Tags</div>
+<div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+  {% for tag in job.tags %}
+    <span style="background:#21262d; border:1px solid #30363d; border-radius:99px; padding:0.15rem 0.65rem; font-size:0.75rem; color:#8b949e;">
+      {{ tag }}
+    </span>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Error -->
+{% if job.error %}
+<div class="section-title text-red">Error</div>
+<pre style="border-color:#6e211e; margin-bottom:1.5rem;">{{ job.error }}</pre>
+{% endif %}
+
+<!-- Provider job ID -->
+<div class="section-title">Provider Details</div>
+<div class="detail-grid" style="margin-bottom:1.5rem;">
+  <div class="detail-block">
+    <dl>
+      <dt>Provider job ID</dt>
+      <dd style="font-size:0.82rem; word-break:break-all;">{{ job.provider_job_id or '—' }}</dd>
+    </dl>
+  </div>
+  <div class="detail-block">
+    <dl>
+      <dt>Provider</dt>
+      <dd>{{ job.provider }}</dd>
+    </dl>
+  </div>
+  <div class="detail-block">
+    <dl>
+      <dt>Model</dt>
+      <dd>{{ job.model }}</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- Config JSON -->
+{% if job.config %}
+<div class="section-title">Batch Config</div>
+<pre>{{ job.config | tojson(indent=2) }}</pre>
+{% endif %}
+
+{% endblock %}

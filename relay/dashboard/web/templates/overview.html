@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Overview — relay dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Overview</h1>
+  <p class="page-subtitle">Live summary — refreshes every 5 seconds via HTMX</p>
+</div>
+
+<!-- Summary cards (HTMX auto-refresh target) -->
+{% include "_cards.html" %}
+
+<!-- Quick links -->
+<div class="section-title">Quick links</div>
+<div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2rem;">
+  <a href="/jobs?status=IN_PROGRESS" class="btn btn-secondary">Active jobs</a>
+  <a href="/jobs?status=FAILED" class="btn btn-danger">Failed jobs</a>
+  <a href="/costs" class="btn btn-secondary">Cost analytics</a>
+</div>
+
+<!-- Recent jobs mini-table -->
+<div class="section-title">Recent jobs</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Provider</th>
+        <th>Model</th>
+        <th>Status</th>
+        <th>Requests</th>
+        <th>Cost (est.)</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody
+      hx-get="/jobs?page=1"
+      hx-trigger="load"
+      hx-target="this"
+      hx-swap="innerHTML"
+      hx-select="tbody tr">
+      <tr>
+        <td colspan="7" class="text-muted" style="text-align:center; padding:1.5rem;">
+          Loading&hellip;
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-2" style="font-size:0.78rem; color:#6e7681;">
+  Showing the 25 most recent jobs. <a href="/jobs">View all jobs &rarr;</a>
+</div>
+{% endblock %}

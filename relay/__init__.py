@@ -1,15 +1,42 @@
-"""Relay - A Python package for batch API calls to commercial LLM APIs."""
+"""relay — Multi-provider LLM batch prediction library.
 
-__version__ = "0.1.0"
+Provides a unified, provider-agnostic interface for submitting, managing,
+monitoring, and downloading results from large-scale text-only batch
+prediction jobs across Anthropic, OpenAI, Google, and XAI.
+"""
 
-from relay.client import RelayClient
-from relay.models import BatchRequest, BatchJob
+from relay.client import BatchClient
+from relay.fan_out import fan_out
+from relay.models import (
+    BatchConfig,
+    BatchError,
+    BatchJob,
+    BatchRequest,
+    BatchResult,
+    CostEstimate,
+    CostSummaryRow,
+    JobProgress,
+    JobStatus,
+    Message,
+    ProviderStatus,
+    RequestStatus,
+)
 
-__all__ = ["RelayClient", "BatchRequest", "BatchJob", "__version__"]
+__version__ = "1.0.0"
 
-# Dashboard function (requires flask to be installed)
-try:
-    from relay.dashboard import run_dashboard
-    __all__.append("run_dashboard")
-except ImportError:
-    pass
+__all__ = [
+    "BatchClient",
+    "BatchConfig",
+    "BatchError",
+    "BatchJob",
+    "BatchRequest",
+    "BatchResult",
+    "CostEstimate",
+    "CostSummaryRow",
+    "JobProgress",
+    "JobStatus",
+    "Message",
+    "ProviderStatus",
+    "RequestStatus",
+    "fan_out",
+]

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Costs — relay dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Cost Analytics</h1>
+  <p class="page-subtitle">
+    All-time total: <strong class="text-green">${{ "%.4f"|format(grand_total) }}</strong>
+    &middot; last 30 calendar days shown in the chart
+  </p>
+</div>
+
+<!-- By provider -->
+<div class="section-title">Spending by provider</div>
+{% if by_provider %}
+<div class="table-wrap" style="margin-bottom:2rem;">
+  <table>
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Jobs</th>
+        <th>Input tokens</th>
+        <th>Output tokens</th>
+        <th>Total tokens</th>
+        <th>Estimated cost</th>
+        <th>Share</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in by_provider %}
+      <tr>
+        <td><strong>{{ row.provider }}</strong></td>
+        <td>{{ row.job_count }}</td>
+        <td>{{ "{:,}".format(row.input_tokens) }}</td>
+        <td>{{ "{:,}".format(row.output_tokens) }}</td>
+        <td>{{ "{:,}".format(row.input_tokens + row.output_tokens) }}</td>
+        <td class="text-green">${{ "%.4f"|format(row.total_usd) }}</td>
+        <td style="min-width:120px;">
+          {% if grand_total > 0 %}
+            {% set share_pct = (row.total_usd / grand_total * 100) | round(1) %}
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <div class="progress-outer" style="width:80px; height:8px;">
+                <div class="progress-inner" style="width:{{ share_pct }}%; background:#1f6feb;"></div>
+              </div>
+              <span style="font-size:0.78rem; color:#6e7681;">{{ share_pct }}%</span>
+            </div>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-muted mb-4">No cost data yet.</p>
+{% endif %}
+
+<!-- By model -->
+{% if by_model %}
+<div class="section-title">Spending by model (top 20)</div>
+<div class="table-wrap" style="margin-bottom:2rem;">
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Jobs</th>
+        <th>Estimated cost</th>
+        <th>Share</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in by_model %}
+      <tr>
+        <td style="font-size:0.82rem;">{{ row.model }}</td>
+        <td>{{ row.job_count }}</td>
+        <td class="text-green">${{ "%.4f"|format(row.total_usd) }}</td>
+        <td style="min-width:120px;">
+          {% if grand_total > 0 %}
+            {% set share_pct = (row.total_usd / grand_total * 100) | round(1) %}
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <div class="progress-outer" style="width:80px; height:8px;">
+                <div class="progress-inner" style="width:{{ share_pct }}%; background:#388bfd;"></div>
+              </div>
+              <span style="font-size:0.78rem; color:#6e7681;">{{ share_pct }}%</span>
+            </div>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Daily spending chart (last 30 days) -->
+<div class="section-title">Daily spending — last 30 days</div>
+<div class="card" style="padding:1.25rem 1.4rem; margin-bottom:2rem;">
+  {% if daily %}
+    <!-- Inline bar chart — no JS build step needed -->
+    <div class="bar-chart">
+      {% for day in daily %}
+      <div class="bar-row" title="{{ day.date }}: ${{ '%.6f'|format(day.total_usd) }}">
+        <span class="bar-label">{{ day.date[5:] }}</span><!-- MM-DD -->
+        <div class="bar-track">
+          {% if max_daily > 0 %}
+            {% set bar_pct = (day.total_usd / max_daily * 100) | round(1) %}
+          {% else %}
+            {% set bar_pct = 0 %}
+          {% endif %}
+          <div class="bar-fill" style="width:{{ bar_pct }}%;
+            {% if day.total_usd == 0 %}background:#21262d;{% endif %}">
+          </div>
+        </div>
+        <span class="bar-value">
+          {% if day.total_usd > 0 %}
+            ${{ "%.4f"|format(day.total_usd) }}
+          {% else %}
+            <span class="text-muted">$0</span>
+          {% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="font-size:0.72rem; color:#6e7681; margin-top:0.5rem;">
+      Based on <code>estimated_cost_usd</code> field. Actual billed amounts may differ.
+    </div>
+  {% else %}
+    <p class="text-muted">No spending data in the last 30 days.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
